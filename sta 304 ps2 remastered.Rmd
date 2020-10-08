@@ -1,0 +1,188 @@
+---
+title: "sta304 a2"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library('dplyr')
+library('tidyverse')
+```
+
+# Introduction
+Introduction
+In this study, our group work as statisticians of Petit Poll firm and conduct a survey related to Canadian voters' necessary information, including gender, age, employment status, etc. The target population is a randomly selected one hundred thousand people of the Canadian population with each individual's frame and sample as individuals who receive the survey. The survey expects to deliver through online formats such as email addresses shared by third-party companies or pop-on web ads on popular forums such as Reddit. The expected cost depends on the fees charged by different firms and forums. The non-response only lowering our sample but did not affect our survey since non-completed survey responses will not be recorded. And we would do our best to protect respondent privacy along with Google, who offers technical support for our survey platform; for more privacy information, please check https://policies.google.com/privacy?hl=en-US.
+Then we simulate possible survey responses based on population data we gathered from the Government of Canada and other related sources.
+Next, we predict the election outcome within six Canadian majority political parties (Liberal Party of Canada, Conservative Party of Canada, New Democratic Party, Bloc Québécois, Green Party of Canada, Others) based on the simulations.
+
+```{r}
+#Question1: What is Your Prefer Gender Identity ?
+set.seed(304)
+gender<-c('Male','Female')
+Gender<-sample(gender,35151728,replace=TRUE,prob=c(0.504,0.496))
+```
+
+```{r}
+#Question2: What is Your Age?
+set.seed(1004709210)
+age_group<-c('24 and younger','25 to 34', '35 to 44','45 to 54','55 to 64','65 to 74','75 and older')
+Age_Group<-sample(age_group,35151728,replace=TRUE,prob=c(29.9781,13.8012,13.8012,15.8503,12.5016,7.5605,6.8555)) #Simulate the tibble for number of people in each age group
+```
+
+```{r}
+#Question3:What is your employment status?
+set.seed(304)
+data<-data.frame(Gender,Age_Group)#Construct a table based on gender and age group
+data$Employment_Status<-NA#Add employment status to the right of age group
+#Filter out different age group
+N24<-nrow(data[data$Age_Group=='24 and younger',])
+N25<-nrow(data[data$Age_Group=='25 to 34',])
+N35<-nrow(data[data$Age_Group=='35 to 44',])
+N45<-nrow(data[data$Age_Group=='45 to 54',])
+N55<-nrow(data[data$Age_Group=='55 to 64',])
+N65<-nrow(data[data$Age_Group=='65 to 74',])
+N75<-nrow(data[data$Age_Group=='75 and older',])
+employment<-c('employed','unemployed','other')
+#Simulate the employed people in each age group
+e_s_24<-sample(employment,N24,replace=TRUE,prob=c(0,0,1))
+e_s_25<-sample(employment,N25,replace=TRUE,prob=c(0.58,0.102,0.318))
+e_s_35<-sample(employment,N35,replace=TRUE,prob=c(0.58,0.102,0.318))
+e_s_45<-sample(employment,N45,replace=TRUE,prob=c(0.58,0.102,0.318))
+e_s_55<-sample(employment,N55,replace=TRUE,prob=c(0.58,0.102,0.318))
+e_s_65<-sample(employment,N65,replace=TRUE,prob=c(0,0,1))
+e_s_75<-sample(employment,N75,replace=TRUE,prob=c(0,0,1))
+#Replace NA by the simulated results
+data[data$Age_Group=='24 and younger',"Employment_Status"]<-e_s_24
+data[data$Age_Group=='25 to 34',"Employment_Status"]<-e_s_25
+data[data$Age_Group=='35 to 44',"Employment_Status"]<-e_s_35
+data[data$Age_Group=='45 to 54',"Employment_Status"]<-e_s_45
+data[data$Age_Group=='55 to 64',"Employment_Status"]<-e_s_55
+data[data$Age_Group=='65 to 74',"Employment_Status"]<-e_s_65
+data[data$Age_Group=='75 and older',"Employment_Status"]<-e_s_75
+```
+
+```{r}
+#Question4: Are You Eligible to Vote Now? 
+set.seed(304)
+data$Eligible<-NA#Add eligible to the right of employment status
+eligible<-c('Yes','No')
+#People who are older than 65 and younger than 24 cannot vote
+e_24<-sample(eligible,N24,replace=TRUE,prob=c(0,1))
+e_65<-sample(eligible,N65,replace=TRUE,prob=c(0,1))
+e_75<-sample(eligible,N75,replace=TRUE,prob=c(0,1))
+#Replace NA by the simulated results
+data[data$Age_Group=='24 and younger',"Eligible"]<-e_24
+data[data$Age_Group=='65 to 74',"Eligible"]<-e_65
+data[data$Age_Group=='75 and older',"Eligible"]<-e_75
+#People aged between 25 to 64 years old
+e_25<-sample(eligible,N25,replace=TRUE,prob=c(0.60,0.40))
+e_35<-sample(eligible,N35,replace=TRUE,prob=c(0.60,0.40))
+e_45<-sample(eligible,N45,replace=TRUE,prob=c(0.60,0.40))
+e_55<-sample(eligible,N55,replace=TRUE,prob=c(0.60,0.40))
+#Replace NA by the simulated results
+data[data$Age_Group=='25 to 34',"Eligible"]<-e_25
+data[data$Age_Group=='35 to 44',"Eligible"]<-e_35
+data[data$Age_Group=='45 to 54',"Eligible"]<-e_45
+data[data$Age_Group=='55 to 64',"Eligible"]<-e_55
+```
+
+```{r}
+#Question5: Are You Willing to Vote for 44th Canadian Federal Election in 2023?
+set.seed(304)
+willing<-c('Yes','No or Maybe')
+Willing_to_Vote<-sample(willing,35151728,replace=TRUE,prob=c(0.683,0.317)) #Simulate the population of people who are going to vote for the 44th Canadian Federal Election
+```
+
+```{r}
+#Question6: Which Canadian Political Party Will You Vote For?
+set.seed(304)
+data$Party<-NA
+party<-c('LIB','CON','NDP','BQ','GRN','OTH','None')
+Female<-nrow(data[data$Gender=='Female',])
+Male<-nrow(data[data$Gender=='Male',])
+#Run simulation based on male and female separately
+party_f<-sample(party,Female,replace=TRUE,prob=c(24.86,21.10,11.83,4.58,4.17,1.71,31.75))
+party_m<-sample(party,Male,replace=TRUE,prob=c(24.86,21.10,11.83,4.58,4.17,1.71,31.75))
+data[data$Gender=='Female',"Party"]<-party_f
+data[data$Gender=='Male',"Party"]<-party_m
+```
+
+```{r}
+#SRS
+#1.Randomly select 100000 rows from data to be the sample
+selected<-sample(1:35151728,100000)
+#Construct a new dataframe
+data_sample<-data[selected,]
+```
+
+# Analysis I
+This graph shows the component of the Canadians by gender. It shows that the numbers of female and male are almost even. Thus, in order to investigate the characteristics of the voters, we need to focus more on other variables such as ages, employment status etc.
+
+```{r}
+ggplot(data_sample,aes(x=Gender))+geom_bar()+geom_text(aes(label=stat(count)),stat='count',vjust=-0.2)
+```
+
+# Analysis II
+By looking at the age distribution based on gender, there are some common characters for both distribution. Firstly, the group of age 24 and younger occupies the largest percentage, it happens for both male and female. Secondly, the least number of people are the age of 75 and older, considering the old people maybe careless about the politics, a small number of this group wouldn't affect the data too much. Another big group is the age of 45 to 64 which is also the main force of labors. This group of people could be the main factors of voters for each parties.
+
+```{r}
+ggplot(data_sample,aes(x=Gender,fill= Age_Group))+geom_bar()
+```
+
+# Analysis III
+Based on the simulation of data, we find that for age class between 25 to 64, 58% of people are employed while 10.2% of people are unemployed while others are not in both status and account for 31.8% of total. Also, for the group of people who aged 24 and younger or 75 and older, they are both unemployed by law or other factors.
+
+# Analysis IV
+We find the eligible age for Canadians to vote is between 25 to 64. Based on that, we find that 60% of Canadians have the right to vote. We can conclude that most of Canadians are eligible to vote for a party. However, we choose to use the stratified method in order to make this investigation less biased and more specific. A number of one hundred thousand people for sample size would be reasonable and we set up our graphs based on this configuration.
+
+# Analysis V
+Then, we take the survey on willingness of people to vote. Most of investigated people are willing to vote for it or when they are eligible for it, and that accounts for a 68.3% of total. Only 31.7% chooses NO, or they are still undecided yet. With this large proportion of people, the degree of participation for voting a party would be considered at very high. Further, We will try to discuss the specific characteristic of people who are willing to vote for each party.
+
+# Analysis VI
+1.
+For employed people, the largest proportion of people choose not to vote accounting for 32.06%. The second and third largest proportion is people who would vote for party 'LIB' and 'CON' ,taking up for 24.7%, 21.13% respectively. Among six main parties, 'GNR' and 'BQ' has way less supporter and only accounts 4.55% and 4.3%. Only 1.63% people would vote other than six main parties.
+```{r}
+Employment<-data_sample$Employment_Status
+employed<-filter(data_sample,Employment=='employed')
+x1<-as.numeric(table(employed$Party))
+piepercent<-(paste(round(100*x1/sum(x1),2)))
+pie(x1, labels = piepercent, main = "PARTIES EMPLOYED PEOPLE VOTE FOR", col = rainbow(length(x1)))
+legend("topright", c('GRN', 'CON', 'BQ', 'LIB', 'NDP', 'NONE', 'OTH'), fill = rainbow(length(x1)), cex = 0.7)
+```
+2.
+For those who are unemployed, their voting selection are not much different from those who are employed. Most people still choose not to vote which accounts for 31.07%. Two largest proportion are still for party 'LIB' and 'CON' while accounts for 25.96% and 20.36% respectively. Also only 1.9% of unemployed people choose to vote other than those six big parties which is the least.
+```{r}
+Employment<-data_sample$Employment_Status
+unemployed<-filter(data_sample,Employment=='unemployed')
+x2<-as.numeric(table(unemployed$Party))
+piepercent<-(paste(round(100*x2/sum(x2),2)))
+pie(x2, labels = piepercent, main = "PARTIES UNEMPLOYED PEOPLE TEND TO VOTE FOR", col = rainbow(length(x2)))
+legend("topright", c('GRN', 'CON', 'BQ', 'LIB', 'NDP', 'NONE', 'OTH'), fill = rainbow(length(x2)), cex = 0.7)
+```
+3.
+Last but no the least, those who are neither employed nor unemployed, their choices are pretty the same. Most for not voting for 31.91% and least for other parties besides those six parties which is only 1.75%. The party named 'NDP' accounts for 11.59% ,it occupies almost the stay number through three different type of people staying in the middle.
+```{r}
+Employment<-data_sample$Employment_Status
+others<-filter(data_sample,Employment=='other')
+x3<-as.numeric(table(others$Party))
+piepercent<-(paste(round(100*x3/sum(x3),2)))
+pie(x3, labels = piepercent, main = "PARTIES OTHER PEOPLE TEND TO VOTE FOR", col = rainbow(length(x3)))
+legend("topright", c('GRN', 'CON', 'BQ', 'LIB', 'NDP', 'NONE', 'OTH'), fill = rainbow(length(x3)), cex = 0.7)
+```
+
+# Conclusion
+After several survey questions, we investigate that the main age group of the population of Canada who are eligible to vote is between 24 to 64. For this age class, they are the main party of the labor force and more importantly they are able to vote by law. We then investigate the Party that those people are willing to vote with the classification of employment status. We find that for all three group of people, most of them choose not to vote, however, the largest group of people who are willing to vote choose the 'Liberal Party of Canada'. In all three chats above, this party always accounts more than the other parties. Although 'Conservative Party of Canada' is another favored party and accounts almost the same percentage, we still believe it would be slightly weaker than the 'Liberal Party of Canada'. To sum up, we predict that the 'Liberal Party of Canada' is most likely to win the election in the year 2023.
+
+# Reference
+
+
+
+
+
+
+
+
+
+
+
+
