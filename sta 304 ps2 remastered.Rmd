@@ -173,7 +173,8 @@ legend("topright", c('GRN', 'CON', 'BQ', 'LIB', 'NDP', 'NONE', 'OTH'), fill = ra
 # Conclusion
 After several survey questions, we investigate that the main age group of the population of Canada who are eligible to vote is between 24 to 64. For this age class, they are the main party of the labor force and more importantly they are able to vote by law. We then investigate the Party that those people are willing to vote with the classification of employment status. We find that for all three group of people, most of them choose not to vote, however, the largest group of people who are willing to vote choose the 'Liberal Party of Canada'. In all three chats above, this party always accounts more than the other parties. Although 'Conservative Party of Canada' is another favored party and accounts almost the same percentage, we still believe it would be slightly weaker than the 'Liberal Party of Canada'. To sum up, we predict that the 'Liberal Party of Canada' is most likely to win the election in the year 2023.
 
-# Reference
+# References
+
 
 
 
